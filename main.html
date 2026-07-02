@@ -624,7 +624,7 @@ body::after {
 
 .dp-list { list-style: none; margin: 0; padding: 0; }
 .dp-row {
-  display: flex; align-items: flex-start; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
   padding: 11px 13px;
   margin-bottom: 6px;
   background: rgba(255,255,255,0.035);
@@ -664,6 +664,39 @@ body::after {
   margin-top: 3px;
 }
 .dp-tip { font-size: 11px; line-height: 1.45; color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
+.dp-badge {
+  display: inline-block; margin-left: 6px; padding: 2px 7px;
+  border-radius: 999px; vertical-align: 2px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  background: rgba(167,139,250,0.14); color: #C4B5FD;
+}
+.dp-ctx { font-size: 11px; line-height: 1.45; color: #FFE2A8; margin-top: 4px; }
+.dp-adapt-btn {
+  margin-top: 7px; padding: 0; border: 0; background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  cursor: pointer; text-align: left;
+  transition: color 0.15s;
+}
+.dp-adapt-btn:hover { color: var(--text-primary); }
+.dp-adapt {
+  flex-basis: 100%; display: none;
+  margin-top: 4px; padding-top: 10px;
+  border-top: 1px dashed rgba(255,255,255,0.10);
+}
+.dp-adapt.open { display: block; }
+.dp-adapt textarea {
+  width: 100%; min-height: 54px; resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; line-height: 1.4;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.dp-adapt textarea:focus { border-color: rgba(255,255,255,0.28); }
+.dp-adapt-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.dp-adapt-status { flex: 1; font-size: 11px; color: var(--text-tertiary); min-height: 14px; }
 .dp-total {
   margin-top: 10px; padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.06);
@@ -1589,8 +1622,15 @@ body::after {
     if (!Array.isArray(p.eaten)) p.eaten = [false, false, false];
     return p;
   }
+  function validMeal(m) {
+    return m && typeof m.name === 'string' && Array.isArray(m.ing) && m.ing.length > 0;
+  }
+  // Library pick per slot, unless an AI-adapted custom meal overrides it.
   function chosenMeals(p) {
-    return SLOTS.map(s => MEALS[s][p[s] % MEALS[s].length]);
+    return SLOTS.map(s => {
+      const custom = p.custom && p.custom[s];
+      return validMeal(custom) ? custom : MEALS[s][p[s] % MEALS[s].length];
+    });
   }
 
   function cleanupOldPlans() {
@@ -1625,6 +1665,12 @@ body::after {
     const title = document.createElement('div');
     title.className = 'dp-title';
     title.textContent = meal.name;
+    if (opts.isCustom) {
+      const badge = document.createElement('span');
+      badge.className = 'dp-badge';
+      badge.textContent = 'yours';
+      title.appendChild(badge);
+    }
     const macros = document.createElement('div');
     macros.className = 'dp-macro-line';
     macros.textContent = meal.kcal + ' kcal · ' + meal.p + 'P · ' + meal.c + 'C · ' + meal.f + 'F';
@@ -1635,13 +1681,26 @@ body::after {
     tip.className = 'dp-tip';
     tip.textContent = meal.tip;
     body.appendChild(title); body.appendChild(macros); body.appendChild(ing); body.appendChild(tip);
+
+    if (opts.ctx && !opts.isCustom) {
+      const note = document.createElement('div');
+      note.className = 'dp-ctx';
+      note.textContent = '📌 Your note: ' + opts.ctx;
+      body.appendChild(note);
+    }
+
+    const adaptBtn = document.createElement('button');
+    adaptBtn.type = 'button';
+    adaptBtn.className = 'dp-adapt-btn';
+    adaptBtn.textContent = opts.ctx ? '📝 Edit my ingredients' : '📝 Use what I have';
+    body.appendChild(adaptBtn);
     li.appendChild(body);
 
     const swap = document.createElement('button');
     swap.type = 'button';
     swap.className = 'gm-queue-btn';
     swap.textContent = '🔄';
-    swap.title = 'Swap this meal';
+    swap.title = 'Swap this meal (clears your ingredients)';
     swap.addEventListener('click', opts.onSwap);
     li.appendChild(swap);
 
@@ -1653,6 +1712,43 @@ body::after {
       cb.addEventListener('change', () => opts.onToggle(cb.checked));
       li.appendChild(cb);
     }
+
+    // Collapsible panel: tell the plan what you actually have on hand.
+    const panel = document.createElement('div');
+    panel.className = 'dp-adapt';
+    const ta = document.createElement('textarea');
+    ta.placeholder = 'What do you have / want to use? e.g. "100 g Transparent Labs mass gainer, no eggs, training in the evening"';
+    ta.value = opts.ctx || '';
+    const row = document.createElement('div');
+    row.className = 'dp-adapt-row';
+    const status = document.createElement('div');
+    status.className = 'dp-adapt-status';
+    const applyBtn = document.createElement('button');
+    applyBtn.type = 'button';
+    applyBtn.className = 'gm-add';
+    applyBtn.textContent = 'Rebuild meal';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'gm-polish';
+    resetBtn.textContent = 'Reset';
+    if (!opts.ctx && !opts.isCustom) resetBtn.style.display = 'none';
+    row.appendChild(status); row.appendChild(resetBtn); row.appendChild(applyBtn);
+    panel.appendChild(ta); panel.appendChild(row);
+    li.appendChild(panel);
+
+    adaptBtn.addEventListener('click', () => {
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) ta.focus();
+    });
+    applyBtn.addEventListener('click', () => {
+      const text = ta.value.trim();
+      if (!text) return;
+      applyBtn.disabled = true;
+      applyBtn.textContent = 'Rebuilding…';
+      opts.onAdapt(text, (msg) => { status.textContent = msg; });
+    });
+    resetBtn.addEventListener('click', opts.onClearAdapt);
+
     return li;
   }
 
@@ -1673,20 +1769,65 @@ body::after {
 
     const nextIdx = checkable ? p.eaten.indexOf(false) : -1;
     meals.forEach((meal, i) => {
+      const slot = SLOTS[i];
       list.appendChild(buildRow(i, meal, {
         checkable: checkable,
         eaten: checkable && !!p.eaten[i],
         isNext: i === nextIdx,
+        isCustom: !!(p.custom && validMeal(p.custom[slot])),
+        ctx: (p.ctx && p.ctx[slot]) || '',
         onSwap: () => {
           const plan = ensurePlan(dateStr);
-          plan[SLOTS[i]] = (plan[SLOTS[i]] + 1) % MEALS[SLOTS[i]].length;
+          plan[slot] = (plan[slot] + 1) % MEALS[slot].length;
           plan.eaten[i] = false;
+          if (plan.custom) delete plan.custom[slot];
+          if (plan.ctx) delete plan.ctx[slot];
           storeSet(k, plan);
           renderAll();
         },
         onToggle: (checked) => {
           const plan = ensurePlan(dateStr);
           plan.eaten[i] = checked;
+          storeSet(k, plan);
+          renderAll();
+        },
+        onAdapt: async (text, setStatus) => {
+          // Save the note first — it survives even if the AI rewrite fails.
+          let plan = ensurePlan(dateStr);
+          plan.ctx = plan.ctx || {};
+          plan.ctx[slot] = text;
+          storeSet(k, plan);
+          const t = getTargets();
+          try {
+            setStatus('Rebuilding around your ingredients…');
+            const res = await fetch('/api/meal-adapt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                meal: meal,
+                context: text,
+                targetKcal: Math.round(t.kcal / 3),
+                targetProtein: Math.round(t.protein / 3),
+              }),
+            });
+            const j = await res.json();
+            if (!res.ok || !validMeal(j)) throw new Error((j && j.error) || 'bad_response');
+            plan = ensurePlan(dateStr);
+            plan.custom = plan.custom || {};
+            plan.custom[slot] = j;
+            plan.eaten[i] = false;
+            storeSet(k, plan);
+            renderAll();
+          } catch (e) {
+            setStatus('Note saved ✓ — AI rebuild unavailable (needs ANTHROPIC_API_KEY on Vercel).');
+            setTimeout(renderAll, 3200);
+          }
+        },
+        onClearAdapt: () => {
+          const plan = ensurePlan(dateStr);
+          if (plan.custom) delete plan.custom[slot];
+          if (plan.ctx) delete plan.ctx[slot];
+          plan.eaten[i] = false;
           storeSet(k, plan);
           renderAll();
         },
