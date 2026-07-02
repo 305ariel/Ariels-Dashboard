@@ -590,10 +590,121 @@ body::after {
 }
 .gm-status.gm-status-error { color: var(--danger); }
 
+/* ===== Component 5: Day Plan ===== */
+.dp-macro-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.dp-macro {
+  text-align: center;
+  padding: 14px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.dp-macro .v {
+  font-size: 22px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.dp-macro .l {
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+}
+.dp-macro-note {
+  font-size: 11.5px; line-height: 1.5;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: 12px;
+}
+
+.dp-list { list-style: none; margin: 0; padding: 0; }
+.dp-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 11px 13px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s, border-color 0.2s;
+}
+.dp-row:hover { background: rgba(255,255,255,0.06); }
+.dp-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
+.dp-row-done .dp-title {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,255,255,0.4);
+}
+.dp-row-now {
+  border-color: rgba(107,227,164,0.40);
+  box-shadow: inset 3px 0 0 0 var(--success);
+}
+.dp-time {
+  width: 62px; flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  padding-top: 3px;
+}
+.dp-emoji { font-size: 16px; flex-shrink: 0; line-height: 1.4; }
+.dp-body { flex: 1; min-width: 0; }
+.dp-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.dp-note { font-size: 11.5px; line-height: 1.45; color: var(--text-tertiary); margin-top: 2px; }
+.dp-row .gm-check { margin-top: 2px; }
+
+.dp-anchors {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  padding-bottom: 16px; margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.dp-anchor { display: flex; flex-direction: column; gap: 6px; }
+.dp-anchor-label {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dp-anchor-row { display: flex; gap: 8px; align-items: center; }
+.dp-time-input {
+  padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: var(--font-mono); font-size: 13px;
+  outline: none;
+  color-scheme: dark;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+.dp-time-input:focus { border-color: rgba(255,255,255,0.28); }
+.dp-time-input:disabled { opacity: 0.35; }
+.dp-rest {
+  padding: 9px 13px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.dp-rest:hover { color: var(--text-primary); }
+.dp-rest.on {
+  background: rgba(242,192,99,0.10);
+  color: #F2C063;
+  border-color: rgba(242,192,99,0.32);
+}
+
 @media (max-width: 480px) {
   body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
   .gm-card { padding: 16px; }
   .gm-progress-num { font-size: 36px; }
+  .dp-macro-grid { grid-template-columns: repeat(2, 1fr); }
+  .dp-time { width: 56px; font-size: 11px; }
 }
 </style>
 </head>
@@ -690,6 +801,68 @@ body::after {
         <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
         <div class="gm-status" id="tomorrowStatus"></div>
       </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Day Plan</div>
+
+    <!-- DAILY TARGETS -->
+    <div class="gm-card" id="dpMacroCard">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow">Daily targets</div>
+          <div class="gm-tomorrow-sub">Fat loss with muscle growth — high protein, mild deficit, 3 meals.</div>
+        </div>
+      </div>
+      <div class="dp-macro-grid" id="dpMacroGrid" style="display:none">
+        <div class="dp-macro"><div class="v" id="dpKcal">—</div><div class="l">kcal</div></div>
+        <div class="dp-macro"><div class="v" id="dpProtein">—</div><div class="l">Protein g</div></div>
+        <div class="dp-macro"><div class="v" id="dpCarbs">—</div><div class="l">Carbs g</div></div>
+        <div class="dp-macro"><div class="v" id="dpFat">—</div><div class="l">Fat g</div></div>
+      </div>
+      <div class="dp-macro-note" id="dpMacroNote"></div>
+    </div>
+
+    <!-- TODAY'S PLAN -->
+    <div class="gm-card" id="dpCardToday">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow" id="dpTodayLabel">Today —</div>
+          <div class="gm-tomorrow-sub">Energy · Focus · Muscle · Fat loss</div>
+        </div>
+        <div class="gm-tomorrow-count" id="dpTodayCount">0 / 0 done</div>
+      </div>
+      <ul class="dp-list" id="dpTodayList"></ul>
+      <button type="button" id="dpRebuildBtn" class="gm-show-toggle">Rebuild today from tomorrow's anchors</button>
+    </div>
+
+    <!-- PLAN TOMORROW -->
+    <div class="gm-card gm-card-tomorrow" id="dpCardTomorrow">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow" id="dpTomorrowLabel">Plan tomorrow —</div>
+          <div class="gm-tomorrow-sub">Set three anchors — the schedule builds itself. Saves automatically, activates at 6 AM.</div>
+        </div>
+      </div>
+      <div class="dp-anchors">
+        <div class="dp-anchor">
+          <span class="dp-anchor-label">Wake</span>
+          <input type="time" class="dp-time-input" id="dpWake" value="08:00">
+        </div>
+        <div class="dp-anchor">
+          <span class="dp-anchor-label">Gym</span>
+          <div class="dp-anchor-row">
+            <input type="time" class="dp-time-input" id="dpGym" value="17:00">
+            <button type="button" class="dp-rest" id="dpRest">Rest day</button>
+          </div>
+        </div>
+        <div class="dp-anchor">
+          <span class="dp-anchor-label">Bed</span>
+          <input type="time" class="dp-time-input" id="dpBed" value="00:00">
+        </div>
+      </div>
+      <ul class="dp-list" id="dpTomorrowList"></ul>
     </div>
   </div>
 
@@ -1313,11 +1486,298 @@ body::after {
 </script>
 
 <script>
+/* ===== Day Plan: anchor-driven daily schedule + macro targets ===== */
+(function () {
+  'use strict';
+
+  const SET_KEY = 'dayplan_settings_v1';
+  const GYM_MIN = 75;
+
+  const $ = (id) => document.getElementById(id);
+  function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function storeDelete(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  // Same 6 AM day boundary as the goals cards, so "today" always agrees.
+  function activeDateString() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  function tomorrowDateString() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() >= 6) d.setDate(d.getDate() + 1);
+    return dateToKey(d);
+  }
+  function formatDate(s) {
+    const p = s.split('-').map(Number);
+    const d = new Date(p[0], p[1] - 1, p[2]);
+    const wk = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return wk + ', ' + mo + ' ' + d.getDate();
+  }
+
+  function planKey(dateStr) { return 'dayplan:' + dateStr; }
+  function getSettings() {
+    return Object.assign({ wake: '08:00', bed: '00:00', gym: '17:00', rest: false }, storeGet(SET_KEY) || {});
+  }
+
+  function toMin(t) {
+    const p = (t || '').split(':');
+    const h = parseInt(p[0], 10), m = parseInt(p[1], 10);
+    return (isNaN(h) || isNaN(m)) ? null : h * 60 + m;
+  }
+  function fmt(t) {
+    t = ((t % 1440) + 1440) % 1440;
+    let h = Math.floor(t / 60);
+    const m = t % 60;
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return h + ':' + pad2(m) + ' ' + ap;
+  }
+
+  // Build the day's blocks from three anchors. Minutes may run past 1440
+  // when bed crosses midnight; fmt() wraps them for display.
+  function buildBlocks(a) {
+    const W = toMin(a.wake) != null ? toMin(a.wake) : 480;
+    let B = toMin(a.bed) != null ? toMin(a.bed) : 0;
+    if (B <= W) B += 1440;
+    let G = a.rest ? null : toMin(a.gym);
+    if (G != null && G < W) G += 1440;
+    if (G != null && G + GYM_MIN > B) G = null;
+
+    const blocks = [];
+    const add = (t, emoji, title, note) => blocks.push({ t, emoji, title, note, done: false });
+
+    add(W, '🌅', 'Wake up', '10 min outdoor light + 500 ml water — anchors your body clock and clears grogginess faster than coffee.');
+
+    // Three meals: protein split evenly; meals slide to serve the workout.
+    let m1 = W + 60;
+    let m1note = '~⅓ of daily protein + slow carbs. First coffee here too: waiting ~1 h after waking blunts the afternoon crash.';
+    if (G != null && G <= m1 + 30) {
+      m1 = G + GYM_MIN + 15;
+      m1note = 'Post-workout — ~⅓ of daily protein + carbs to kickstart muscle repair. Coffee before the session is fine.';
+    }
+    const m3 = Math.max(B - 180, m1 + 120);
+    let m2, m2note = '';
+    if (G != null && G - 120 > m1 + 60 && G - 120 < m3 - 60) {
+      m2 = G - 120; m2note = ' Timed 2 h pre-workout so it fuels the session.';
+    } else if (G != null && G + GYM_MIN + 30 > m1 + 60 && G + GYM_MIN + 30 < m3 - 60) {
+      m2 = G + GYM_MIN + 30; m2note = ' Post-workout — protein + carbs to drive muscle repair.';
+    } else {
+      m2 = Math.round((m1 + m3) / 2);
+    }
+    add(m1, '🍳', 'Meal 1 — protein-first breakfast', m1note);
+    add(m2, '🍗', 'Meal 2', '~⅓ of daily protein, carbs + veg.' + m2note);
+    add(m3, '🥩', 'Meal 3 — last food of the day', '~⅓ of daily protein + carbs (helps sleep onset). Finishing ~3 h before bed protects sleep quality.');
+
+    // Deep work rides the two circadian alertness peaks.
+    let dw1 = W + 120;
+    if (G != null && G < dw1 + 150 && G + GYM_MIN > dw1) dw1 = G + GYM_MIN + 45;
+    if (dw1 + 90 < B) add(dw1, '🧠', 'Deep work block 1 (90–150 min)', 'Morning alertness peak — hardest cognitive task first, phone in another room.');
+
+    if (G != null) add(G, '💪', 'Lift (~' + GYM_MIN + ' min)', 'Compounds first, 0–2 reps in reserve. Get protein in within a couple hours after.');
+
+    let dw2 = Math.max(m2 + 60, W + 420);
+    if (G != null && G < dw2 + 90 && G + GYM_MIN > dw2) dw2 = G + GYM_MIN + 45;
+    if (dw2 > dw1 + 150 && dw2 + 90 < B - 90) add(dw2, '📚', 'Deep work block 2 (60–90 min)', 'Second alertness wave. Stand and move 2–3 min every half hour.');
+
+    const cut = B - 600;
+    if (cut > W + 60) add(cut, '🚫', 'Caffeine cutoff', 'Nothing caffeinated after this — half-life is ~5–6 h and late doses eat deep sleep, which costs tomorrow\'s energy.');
+
+    const walk = m3 + 40;
+    if (walk + 20 < B - 60) add(walk, '🚶', '10–15 min walk', 'Post-dinner walk blunts the glucose spike — a cheap fat-loss and evening-energy win.');
+
+    add(B - 60, '🌙', 'Wind down', 'Screens dim, lights low, no more food. Set tomorrow\'s anchors and pack the gym bag.');
+    add(B, '😴', 'Lights out', '7.5–9 h of sleep is the single biggest lever for muscle growth, fat loss and memory.');
+
+    blocks.sort((x, y) => x.t - y.t);
+    return blocks;
+  }
+
+  // ---------- today ----------
+  function cleanupOldPlans() {
+    const today = activeDateString();
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('dayplan:') === 0 && k.slice('dayplan:'.length) < today) storeDelete(k);
+    }
+  }
+  function ensureTodayPlan() {
+    const k = planKey(activeDateString());
+    let p = storeGet(k);
+    if (!p || !Array.isArray(p.blocks) || p.blocks.length === 0) {
+      const a = getSettings();
+      p = { anchors: a, blocks: buildBlocks(a) };
+      storeSet(k, p);
+    }
+    return p;
+  }
+  function nowMinutes() {
+    const now = new Date();
+    let m = now.getHours() * 60 + now.getMinutes();
+    if (now.getHours() < 6) m += 1440;
+    return m;
+  }
+
+  function buildRow(block, checkable, isNow, onToggle) {
+    const li = document.createElement('li');
+    li.className = 'dp-row' + (block.done ? ' dp-row-done' : '') + (isNow ? ' dp-row-now' : '');
+
+    const time = document.createElement('span');
+    time.className = 'dp-time';
+    time.textContent = fmt(block.t);
+    li.appendChild(time);
+
+    const emoji = document.createElement('span');
+    emoji.className = 'dp-emoji';
+    emoji.textContent = block.emoji;
+    li.appendChild(emoji);
+
+    const body = document.createElement('div');
+    body.className = 'dp-body';
+    const title = document.createElement('div');
+    title.className = 'dp-title';
+    title.textContent = block.title;
+    const note = document.createElement('div');
+    note.className = 'dp-note';
+    note.textContent = block.note;
+    body.appendChild(title); body.appendChild(note);
+    li.appendChild(body);
+
+    if (checkable) {
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'gm-check';
+      cb.checked = !!block.done;
+      cb.addEventListener('change', () => onToggle(cb.checked));
+      li.appendChild(cb);
+    }
+    return li;
+  }
+
+  function renderToday() {
+    const k = planKey(activeDateString());
+    const p = ensureTodayPlan();
+    $('dpTodayLabel').textContent = 'Today — ' + formatDate(activeDateString());
+
+    const done = p.blocks.filter(b => b.done).length;
+    $('dpTodayCount').textContent = done + ' / ' + p.blocks.length + ' done';
+
+    // Highlight the block whose window contains "now".
+    const now = nowMinutes();
+    let nowIdx = -1;
+    p.blocks.forEach((b, i) => { if (b.t <= now) nowIdx = i; });
+
+    const list = $('dpTodayList');
+    list.innerHTML = '';
+    p.blocks.forEach((b, i) => {
+      list.appendChild(buildRow(b, true, i === nowIdx, (checked) => {
+        const plan = storeGet(k);
+        if (!plan || !plan.blocks || !plan.blocks[i]) return;
+        plan.blocks[i].done = checked;
+        storeSet(k, plan);
+        renderToday();
+      }));
+    });
+  }
+
+  // ---------- tomorrow ----------
+  function anchorsFromInputs() {
+    return {
+      wake: $('dpWake').value || '08:00',
+      bed:  $('dpBed').value  || '00:00',
+      gym:  $('dpGym').value  || '17:00',
+      rest: $('dpRest').classList.contains('on'),
+    };
+  }
+  function fillInputs(a) {
+    $('dpWake').value = a.wake;
+    $('dpBed').value  = a.bed;
+    $('dpGym').value  = a.gym;
+    $('dpRest').classList.toggle('on', !!a.rest);
+    $('dpGym').disabled = !!a.rest;
+  }
+  function saveTomorrow() {
+    const a = anchorsFromInputs();
+    storeSet(SET_KEY, a);
+    storeSet(planKey(tomorrowDateString()), { anchors: a, blocks: buildBlocks(a) });
+    renderTomorrow();
+  }
+  function renderTomorrow() {
+    $('dpTomorrowLabel').textContent = 'Plan tomorrow — ' + formatDate(tomorrowDateString());
+    const p = storeGet(planKey(tomorrowDateString()));
+    const blocks = (p && Array.isArray(p.blocks)) ? p.blocks : buildBlocks(getSettings());
+    const list = $('dpTomorrowList');
+    list.innerHTML = '';
+    blocks.forEach(b => list.appendChild(buildRow(b, false, false, null)));
+  }
+
+  ['dpWake', 'dpGym', 'dpBed'].forEach(id => $(id).addEventListener('change', saveTomorrow));
+  $('dpRest').addEventListener('click', () => {
+    $('dpRest').classList.toggle('on');
+    $('dpGym').disabled = $('dpRest').classList.contains('on');
+    saveTomorrow();
+  });
+  $('dpRebuildBtn').addEventListener('click', () => {
+    if (!confirm('Rebuild today\'s schedule from the anchors below? Checked-off blocks reset.')) return;
+    const a = anchorsFromInputs();
+    storeSet(SET_KEY, a);
+    storeSet(planKey(activeDateString()), { anchors: a, blocks: buildBlocks(a) });
+    renderToday();
+  });
+
+  // ---------- macro targets (from the hub profile) ----------
+  function renderMacros() {
+    const w = storeGet('po_water_v1');
+    const p = (w && w.profile) || {};
+    const grid = $('dpMacroGrid'), note = $('dpMacroNote');
+    if (!p.weightKg || !p.heightCm || !p.age) {
+      grid.style.display = 'none';
+      note.textContent = 'Add height, weight and age via ⚙ on the home page to get calorie and protein targets.';
+      return;
+    }
+    const male = p.sex !== 'f';
+    const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (male ? 5 : -161);
+    const act = 1.3 + Math.min(p.activityHrsPerWeek || 0, 14) * 0.025;
+    const kcal = Math.round(bmr * act * 0.85 / 10) * 10;   // ~15% deficit
+    const protein = Math.round(p.weightKg * 2);            // 2 g/kg
+    const fat = Math.round(p.weightKg * 0.8);
+    const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+    grid.style.display = '';
+    $('dpKcal').textContent = kcal;
+    $('dpProtein').textContent = protein;
+    $('dpCarbs').textContent = carbs;
+    $('dpFat').textContent = fat;
+    note.textContent = '≈15% below maintenance for fat loss, protein at 2 g/kg to build muscle. Per meal: ~'
+      + Math.round(kcal / 3) + ' kcal · ~' + Math.round(protein / 3) + ' g protein.';
+  }
+
+  // ---------- boot ----------
+  cleanupOldPlans();
+  fillInputs((storeGet(planKey(tomorrowDateString())) || {}).anchors || getSettings());
+  renderToday();
+  renderTomorrow();
+  renderMacros();
+  setInterval(renderToday, 60 * 1000);
+
+  window.addEventListener('storage', () => {
+    fillInputs((storeGet(planKey(tomorrowDateString())) || {}).anchors || getSettings());
+    renderToday(); renderTomorrow(); renderMacros();
+  });
+})();
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedPrefixes: ['goals:'],
+    syncedPrefixes: ['goals:', 'dayplan:'],
+    syncedKeys: ['dayplan_settings_v1'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
       window.dispatchEvent(new Event('storage'));
