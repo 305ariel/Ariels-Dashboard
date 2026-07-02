@@ -1779,6 +1779,13 @@ body::after {
       tip: typeof out.tip === 'string' ? out.tip : '',
     };
   }
+  function extractJSON(text) {
+    text = (text || '').trim();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) throw new Error('no JSON in AI response');
+    return JSON.parse(text.slice(start, end + 1));
+  }
   async function adaptViaServer(meal, context, targetKcal, targetProtein) {
     const res = await fetch('/api/meal-adapt', {
       method: 'POST',
@@ -1786,7 +1793,7 @@ body::after {
       body: JSON.stringify({ meal, context, targetKcal, targetProtein }),
     });
     const j = await res.json();
-    if (!res.ok) throw new Error((j && j.error) || ('http_' + res.status));
+    if (!res.ok) throw new Error((j && (j.detail || j.error)) || ('http_' + res.status));
     return normalizeMeal(j);
   }
   // Same key the Nova page saves — paste it once there and rebuilds work everywhere.
@@ -1801,16 +1808,17 @@ body::after {
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        // Same model Nova uses — known to work with this key/pattern.
+        model: 'claude-opus-4-8',
         max_tokens: 1000,
         messages: [{ role: 'user', content: adaptPrompt(meal, context, targetKcal, targetProtein) }],
       }),
     });
     const j = await res.json();
     if (j.error) throw new Error(j.error.message || 'anthropic_error');
-    const text = ((j.content && j.content[0] && j.content[0].text) || '').trim()
-      .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    return normalizeMeal(JSON.parse(text));
+    const meal2 = normalizeMeal(extractJSON((j.content && j.content[0] && j.content[0].text) || ''));
+    if (!meal2) throw new Error('AI response missing meal fields');
+    return meal2;
   }
 
   function renderTotals(el, meals) {
@@ -1863,9 +1871,12 @@ body::after {
           const protT = Math.round(t.protein / 3);
           setStatus('Rebuilding around your ingredients…');
           let custom = null;
-          try { custom = await adaptViaServer(meal, text, kcalT, protT); } catch (e) {}
+          let errMsg = '';
+          try { custom = await adaptViaServer(meal, text, kcalT, protT); }
+          catch (e) { errMsg = (e && e.message) || 'server route unavailable'; }
           if (!custom && novaKey()) {
-            try { custom = await adaptViaBrowser(meal, text, kcalT, protT); } catch (e) {}
+            try { custom = await adaptViaBrowser(meal, text, kcalT, protT); errMsg = ''; }
+            catch (e) { errMsg = (e && e.message) || 'request failed'; }
           }
           if (custom) {
             plan = ensurePlan(dateStr);
@@ -1876,9 +1887,9 @@ body::after {
             renderAll();
           } else {
             setStatus(novaKey()
-              ? 'Note saved ✓ — rebuild failed, try again in a moment.'
+              ? 'Note saved ✓ — rebuild failed: ' + errMsg
               : 'Note saved ✓ — paste your Anthropic API key on the Nova page to enable rebuilds.');
-            setTimeout(renderAll, 4500);
+            setTimeout(renderAll, 8000);
           }
         },
         onClearAdapt: () => {

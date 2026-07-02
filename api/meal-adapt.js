@@ -45,7 +45,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        model: 'claude-opus-4-8',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -54,9 +54,13 @@ export default async function handler(req, res) {
     if (!aiRes.ok) {
       return res.status(502).json({ error: 'anthropic_error', detail: data && data.error && data.error.message });
     }
-    let text = (data.content && data.content[0] && data.content[0].text) || '';
-    text = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    const out = JSON.parse(text);
+    const text = (data.content && data.content[0] && data.content[0].text) || '';
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) {
+      return res.status(502).json({ error: 'bad_ai_response', detail: 'no JSON in AI response' });
+    }
+    const out = JSON.parse(text.slice(start, end + 1));
     if (!out || typeof out.name !== 'string' || !Array.isArray(out.ing) || out.ing.length === 0) {
       return res.status(502).json({ error: 'bad_ai_response' });
     }
