@@ -656,47 +656,22 @@ body::after {
 .dp-note { font-size: 11.5px; line-height: 1.45; color: var(--text-tertiary); margin-top: 2px; }
 .dp-row .gm-check { margin-top: 2px; }
 
-.dp-anchors {
-  display: flex; flex-wrap: wrap; gap: 16px;
-  padding-bottom: 16px; margin-bottom: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+.dp-macro-line {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  margin-top: 3px;
 }
-.dp-anchor { display: flex; flex-direction: column; gap: 6px; }
-.dp-anchor-label {
-  font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.dp-anchor-row { display: flex; gap: 8px; align-items: center; }
-.dp-time-input {
-  padding: 9px 11px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  background: rgba(0,0,0,0.28);
-  color: var(--text-primary);
-  font-family: var(--font-mono); font-size: 13px;
-  outline: none;
-  color-scheme: dark;
-  transition: border-color 0.2s, opacity 0.2s;
-}
-.dp-time-input:focus { border-color: rgba(255,255,255,0.28); }
-.dp-time-input:disabled { opacity: 0.35; }
-.dp-rest {
-  padding: 9px 13px;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-tertiary);
-  font-family: inherit; font-size: 11px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.dp-rest:hover { color: var(--text-primary); }
-.dp-rest.on {
-  background: rgba(242,192,99,0.10);
-  color: #F2C063;
-  border-color: rgba(242,192,99,0.32);
+.dp-tip { font-size: 11px; line-height: 1.45; color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
+.dp-total {
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  text-align: right;
 }
 
 @media (max-width: 480px) {
@@ -805,7 +780,7 @@ body::after {
   </div>
 
   <div class="section">
-    <div class="section-title">Day Plan</div>
+    <div class="section-title">Meal Plan</div>
 
     <!-- DAILY TARGETS -->
     <div class="gm-card" id="dpMacroCard">
@@ -815,7 +790,7 @@ body::after {
           <div class="gm-tomorrow-sub">Fat loss with muscle growth — high protein, mild deficit, 3 meals.</div>
         </div>
       </div>
-      <div class="dp-macro-grid" id="dpMacroGrid" style="display:none">
+      <div class="dp-macro-grid" id="dpMacroGrid">
         <div class="dp-macro"><div class="v" id="dpKcal">—</div><div class="l">kcal</div></div>
         <div class="dp-macro"><div class="v" id="dpProtein">—</div><div class="l">Protein g</div></div>
         <div class="dp-macro"><div class="v" id="dpCarbs">—</div><div class="l">Carbs g</div></div>
@@ -824,45 +799,29 @@ body::after {
       <div class="dp-macro-note" id="dpMacroNote"></div>
     </div>
 
-    <!-- TODAY'S PLAN -->
-    <div class="gm-card" id="dpCardToday">
+    <!-- TODAY'S MEALS -->
+    <div class="gm-card" id="mpCardToday">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow" id="dpTodayLabel">Today —</div>
-          <div class="gm-tomorrow-sub">Energy · Focus · Muscle · Fat loss</div>
+          <div class="gm-eyebrow" id="mpTodayLabel">Today —</div>
+          <div class="gm-tomorrow-sub">Check meals off as you eat them. 🔄 swaps a meal if plans change.</div>
         </div>
-        <div class="gm-tomorrow-count" id="dpTodayCount">0 / 0 done</div>
+        <div class="gm-tomorrow-count" id="mpTodayCount">0 / 3 eaten</div>
       </div>
-      <ul class="dp-list" id="dpTodayList"></ul>
-      <button type="button" id="dpRebuildBtn" class="gm-show-toggle">Rebuild today from tomorrow's anchors</button>
+      <ul class="dp-list" id="mpTodayList"></ul>
+      <div class="dp-total" id="mpTodayTotal"></div>
     </div>
 
     <!-- PLAN TOMORROW -->
-    <div class="gm-card gm-card-tomorrow" id="dpCardTomorrow">
+    <div class="gm-card gm-card-tomorrow" id="mpCardTomorrow">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow" id="dpTomorrowLabel">Plan tomorrow —</div>
-          <div class="gm-tomorrow-sub">Set three anchors — the schedule builds itself. Saves automatically, activates at 6 AM.</div>
+          <div class="gm-eyebrow" id="mpTomorrowLabel">Plan tomorrow —</div>
+          <div class="gm-tomorrow-sub">Rotates automatically — 🔄 any meal you're not feeling. Locks in at 6 AM.</div>
         </div>
       </div>
-      <div class="dp-anchors">
-        <div class="dp-anchor">
-          <span class="dp-anchor-label">Wake</span>
-          <input type="time" class="dp-time-input" id="dpWake" value="08:00">
-        </div>
-        <div class="dp-anchor">
-          <span class="dp-anchor-label">Gym</span>
-          <div class="dp-anchor-row">
-            <input type="time" class="dp-time-input" id="dpGym" value="17:00">
-            <button type="button" class="dp-rest" id="dpRest">Rest day</button>
-          </div>
-        </div>
-        <div class="dp-anchor">
-          <span class="dp-anchor-label">Bed</span>
-          <input type="time" class="dp-time-input" id="dpBed" value="00:00">
-        </div>
-      </div>
-      <ul class="dp-list" id="dpTomorrowList"></ul>
+      <ul class="dp-list" id="mpTomorrowList"></ul>
+      <div class="dp-total" id="mpTomorrowTotal"></div>
     </div>
   </div>
 
@@ -1486,12 +1445,9 @@ body::after {
 </script>
 
 <script>
-/* ===== Day Plan: anchor-driven daily schedule + macro targets ===== */
+/* ===== Meal Plan: exact 3-meal days with ingredients + macro targets ===== */
 (function () {
   'use strict';
-
-  const SET_KEY = 'dayplan_settings_v1';
-  const GYM_MIN = 75;
 
   const $ = (id) => document.getElementById(id);
   function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
@@ -1520,254 +1476,240 @@ body::after {
     return wk + ', ' + mo + ' ' + d.getDate();
   }
 
-  function planKey(dateStr) { return 'dayplan:' + dateStr; }
-  function getSettings() {
-    return Object.assign({ wake: '08:00', bed: '00:00', gym: '17:00', rest: false }, storeGet(SET_KEY) || {});
+  function planKey(d) { return 'mealplan:' + d; }
+
+  // ---------- targets ----------
+  // Fallback stats: 6'2" / 180 lb. A saved profile (⚙ on the home page) overrides.
+  const DEFAULT_STATS = { heightCm: 188, weightKg: 81.6, age: 25, sex: 'm', activityHrsPerWeek: 5 };
+
+  function getStats() {
+    const w = storeGet('po_water_v1');
+    const p = (w && w.profile) || {};
+    return {
+      heightCm: p.heightCm || DEFAULT_STATS.heightCm,
+      weightKg: p.weightKg || DEFAULT_STATS.weightKg,
+      age: p.age || DEFAULT_STATS.age,
+      sex: p.sex || DEFAULT_STATS.sex,
+      act: p.activityHrsPerWeek != null ? p.activityHrsPerWeek : DEFAULT_STATS.activityHrsPerWeek,
+      fromProfile: !!(p.heightCm && p.weightKg && p.age),
+    };
+  }
+  function getTargets() {
+    const s = getStats();
+    const male = s.sex !== 'f';
+    const bmr = 10 * s.weightKg + 6.25 * s.heightCm - 5 * s.age + (male ? 5 : -161);
+    const actF = 1.3 + Math.min(s.act || 0, 14) * 0.025;
+    const kcal = Math.round(bmr * actF * 0.85 / 10) * 10;   // ~15% deficit
+    const protein = Math.round(s.weightKg * 2);             // 2 g/kg
+    const fat = Math.round(s.weightKg * 0.8);
+    const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+    return { kcal, protein, fat, carbs, fromProfile: s.fromProfile };
   }
 
-  function toMin(t) {
-    const p = (t || '').split(':');
-    const h = parseInt(p[0], 10), m = parseInt(p[1], 10);
-    return (isNaN(h) || isNaN(m)) ? null : h * 60 + m;
+  function renderMacros() {
+    const t = getTargets();
+    $('dpKcal').textContent = t.kcal;
+    $('dpProtein').textContent = t.protein;
+    $('dpCarbs').textContent = t.carbs;
+    $('dpFat').textContent = t.fat;
+    const basis = t.fromProfile
+      ? 'From your saved profile.'
+      : 'Based on 6′2″, 180 lb (age assumed 25 — save your real age via ⚙ on the home page).';
+    $('dpMacroNote').textContent = basis
+      + ' ≈15% below maintenance for fat loss, protein at 2 g/kg for muscle. Per meal: ~'
+      + Math.round(t.kcal / 3) + ' kcal · ~' + Math.round(t.protein / 3)
+      + ' g protein. Daily extras: 5 g creatine, 2–3 L water.';
   }
-  function fmt(t) {
-    t = ((t % 1440) + 1440) % 1440;
-    let h = Math.floor(t / 60);
-    const m = t % 60;
-    const ap = h >= 12 ? 'PM' : 'AM';
-    h = h % 12; if (h === 0) h = 12;
-    return h + ':' + pad2(m) + ' ' + ap;
+
+  // ---------- meal library ----------
+  // Macros are per full recipe: kcal / protein / carbs / fat (grams).
+  const MEALS = {
+    b: [
+      { name: 'Eggs, oats & blueberries', emoji: '🍳', kcal: 690, p: 54, c: 71, f: 20,
+        ing: ['3 whole eggs', '100 g egg whites', '70 g oats (dry)', '20 g whey stirred into the oats', '150 g blueberries'],
+        tip: 'Choline from the yolks supports memory; slow oats give steady morning energy.' },
+      { name: 'Greek yogurt power bowl', emoji: '🥣', kcal: 690, p: 61, c: 71, f: 14,
+        ing: ['300 g 0% Greek yogurt', '30 g whey', '50 g granola', '1 banana', '15 g chia seeds'],
+        tip: 'Fastest breakfast in the library — zero cooking, chia adds omega-3s.' },
+      { name: 'Cottage cheese & avocado toast', emoji: '🥑', kcal: 720, p: 50, c: 74, f: 24,
+        ing: ['250 g low-fat cottage cheese', '2 slices whole-grain bread', '2 whole eggs', '½ avocado (70 g)', '100 g cherry tomatoes', '1 banana'],
+        tip: 'Monounsaturated fat + B-vitamins — solid brain fuel for a deep-work morning.' },
+      { name: 'PB-banana protein smoothie + oats', emoji: '🥤', kcal: 735, p: 51, c: 89, f: 18,
+        ing: ['40 g whey', '80 g oats (dry)', '1 banana', '20 g peanut butter', '300 ml unsweetened almond milk', '100 g spinach (you won’t taste it)'],
+        tip: 'Highest-carb breakfast — best pick before a morning training session.' },
+    ],
+    l: [
+      { name: 'Chicken, basmati & broccoli', emoji: '🍗', kcal: 700, p: 58, c: 83, f: 16,
+        ing: ['200 g chicken breast', '90 g basmati rice (dry)', '200 g broccoli', '10 g olive oil', 'salt, pepper, paprika'],
+        tip: 'The classic for a reason — easy to meal-prep 3 days at once.' },
+      { name: 'Salmon & sweet potato', emoji: '🐟', kcal: 675, p: 46, c: 68, f: 24,
+        ing: ['180 g salmon fillet', '300 g sweet potato', '200 g asparagus', 'lemon + dill'],
+        tip: 'EPA/DHA omega-3s — the single best food for cognitive function.' },
+      { name: 'Turkey burrito bowl', emoji: '🌯', kcal: 795, p: 52, c: 94, f: 21,
+        ing: ['200 g lean ground turkey (93/7)', '70 g rice (dry)', '120 g black beans (cooked)', '50 g corn', '50 g salsa', '30 g avocado'],
+        tip: 'Beans add fiber and slow carbs for a crash-free afternoon.' },
+      { name: 'Tuna pasta salad', emoji: '🍝', kcal: 735, p: 72, c: 66, f: 19,
+        ing: ['2 cans tuna (2×100 g drained)', '80 g whole-wheat pasta (dry)', '100 g cherry tomatoes', '100 g cucumber', '100 g Greek yogurt + lemon as dressing', '15 g olive oil'],
+        tip: 'Highest-protein lunch in the rotation — great after a heavy lift.' },
+    ],
+    d: [
+      { name: 'Lean beef & potatoes', emoji: '🥩', kcal: 680, p: 52, c: 74, f: 18,
+        ing: ['200 g lean ground beef (95/5)', '350 g potatoes', '200 g green beans', '10 g butter'],
+        tip: 'Beef brings creatine, iron and B12 — strength and energy staples.' },
+      { name: 'Salmon, quinoa & salad', emoji: '🥗', kcal: 705, p: 45, c: 50, f: 34,
+        ing: ['170 g salmon fillet', '70 g quinoa (dry)', '150 g mixed salad greens', '8 g olive oil + balsamic'],
+        tip: 'Second omega-3 hit of the week keeps the brain topped up.' },
+      { name: 'Chicken thigh stir-fry', emoji: '🍚', kcal: 735, p: 55, c: 82, f: 20,
+        ing: ['220 g skinless chicken thigh', '80 g jasmine rice (dry)', '300 g stir-fry vegetables', '10 g sesame oil', '15 ml soy sauce, garlic, ginger'],
+        tip: 'Thighs stay juicy — the easiest dinner to actually stick to.' },
+      { name: 'Cod, rice & pre-bed yogurt', emoji: '🐠', kcal: 710, p: 68, c: 76, f: 12,
+        ing: ['250 g cod (or any white fish)', '80 g rice (dry)', '200 g zucchini', '10 g olive oil', '170 g 0% Greek yogurt for dessert'],
+        tip: 'Slow-digesting casein in the yogurt feeds muscle repair overnight.' },
+    ],
+  };
+  const SLOTS = ['b', 'l', 'd'];
+  const SLOT_LABEL = ['MEAL 1', 'MEAL 2', 'MEAL 3'];
+
+  // ---------- per-day plan (rotates deterministically, swappable) ----------
+  function daySeed(dateStr) {
+    const p = dateStr.split('-').map(Number);
+    return Math.floor(new Date(p[0], p[1] - 1, p[2]).getTime() / 86400000);
   }
-
-  // Build the day's blocks from three anchors. Minutes may run past 1440
-  // when bed crosses midnight; fmt() wraps them for display.
-  function buildBlocks(a) {
-    const W = toMin(a.wake) != null ? toMin(a.wake) : 480;
-    let B = toMin(a.bed) != null ? toMin(a.bed) : 0;
-    if (B <= W) B += 1440;
-    let G = a.rest ? null : toMin(a.gym);
-    if (G != null && G < W) G += 1440;
-    if (G != null && G + GYM_MIN > B) G = null;
-
-    const blocks = [];
-    const add = (t, emoji, title, note) => blocks.push({ t, emoji, title, note, done: false });
-
-    add(W, '🌅', 'Wake up', '10 min outdoor light + 500 ml water — anchors your body clock and clears grogginess faster than coffee.');
-
-    // Three meals: protein split evenly; meals slide to serve the workout.
-    let m1 = W + 60;
-    let m1note = '~⅓ of daily protein + slow carbs. First coffee here too: waiting ~1 h after waking blunts the afternoon crash.';
-    if (G != null && G <= m1 + 30) {
-      m1 = G + GYM_MIN + 15;
-      m1note = 'Post-workout — ~⅓ of daily protein + carbs to kickstart muscle repair. Coffee before the session is fine.';
+  function defaultPlan(dateStr) {
+    const s = daySeed(dateStr);
+    return { b: s % MEALS.b.length, l: (s + 1) % MEALS.l.length, d: (s + 2) % MEALS.d.length, eaten: [false, false, false] };
+  }
+  function ensurePlan(dateStr) {
+    const k = planKey(dateStr);
+    let p = storeGet(k);
+    if (!p || typeof p.b !== 'number' || typeof p.l !== 'number' || typeof p.d !== 'number') {
+      p = defaultPlan(dateStr);
+      storeSet(k, p);
     }
-    const m3 = Math.max(B - 180, m1 + 120);
-    let m2, m2note = '';
-    if (G != null && G - 120 > m1 + 60 && G - 120 < m3 - 60) {
-      m2 = G - 120; m2note = ' Timed 2 h pre-workout so it fuels the session.';
-    } else if (G != null && G + GYM_MIN + 30 > m1 + 60 && G + GYM_MIN + 30 < m3 - 60) {
-      m2 = G + GYM_MIN + 30; m2note = ' Post-workout — protein + carbs to drive muscle repair.';
-    } else {
-      m2 = Math.round((m1 + m3) / 2);
-    }
-    add(m1, '🍳', 'Meal 1 — protein-first breakfast', m1note);
-    add(m2, '🍗', 'Meal 2', '~⅓ of daily protein, carbs + veg.' + m2note);
-    add(m3, '🥩', 'Meal 3 — last food of the day', '~⅓ of daily protein + carbs (helps sleep onset). Finishing ~3 h before bed protects sleep quality.');
-
-    // Deep work rides the two circadian alertness peaks.
-    let dw1 = W + 120;
-    if (G != null && G < dw1 + 150 && G + GYM_MIN > dw1) dw1 = G + GYM_MIN + 45;
-    if (dw1 + 90 < B) add(dw1, '🧠', 'Deep work block 1 (90–150 min)', 'Morning alertness peak — hardest cognitive task first, phone in another room.');
-
-    if (G != null) add(G, '💪', 'Lift (~' + GYM_MIN + ' min)', 'Compounds first, 0–2 reps in reserve. Get protein in within a couple hours after.');
-
-    let dw2 = Math.max(m2 + 60, W + 420);
-    if (G != null && G < dw2 + 90 && G + GYM_MIN > dw2) dw2 = G + GYM_MIN + 45;
-    if (dw2 > dw1 + 150 && dw2 + 90 < B - 90) add(dw2, '📚', 'Deep work block 2 (60–90 min)', 'Second alertness wave. Stand and move 2–3 min every half hour.');
-
-    const cut = B - 600;
-    if (cut > W + 60) add(cut, '🚫', 'Caffeine cutoff', 'Nothing caffeinated after this — half-life is ~5–6 h and late doses eat deep sleep, which costs tomorrow\'s energy.');
-
-    const walk = m3 + 40;
-    if (walk + 20 < B - 60) add(walk, '🚶', '10–15 min walk', 'Post-dinner walk blunts the glucose spike — a cheap fat-loss and evening-energy win.');
-
-    add(B - 60, '🌙', 'Wind down', 'Screens dim, lights low, no more food. Set tomorrow\'s anchors and pack the gym bag.');
-    add(B, '😴', 'Lights out', '7.5–9 h of sleep is the single biggest lever for muscle growth, fat loss and memory.');
-
-    blocks.sort((x, y) => x.t - y.t);
-    return blocks;
+    if (!Array.isArray(p.eaten)) p.eaten = [false, false, false];
+    return p;
+  }
+  function chosenMeals(p) {
+    return SLOTS.map(s => MEALS[s][p[s] % MEALS[s].length]);
   }
 
-  // ---------- today ----------
   function cleanupOldPlans() {
     const today = activeDateString();
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (k && k.indexOf('dayplan:') === 0 && k.slice('dayplan:'.length) < today) storeDelete(k);
+      if (!k) continue;
+      if (k.indexOf('mealplan:') === 0 && k.slice('mealplan:'.length) < today) storeDelete(k);
+      if (k.indexOf('dayplan:') === 0 || k === 'dayplan_settings_v1') storeDelete(k); // legacy schedule keys
     }
-  }
-  function ensureTodayPlan() {
-    const k = planKey(activeDateString());
-    let p = storeGet(k);
-    if (!p || !Array.isArray(p.blocks) || p.blocks.length === 0) {
-      const a = getSettings();
-      p = { anchors: a, blocks: buildBlocks(a) };
-      storeSet(k, p);
-    }
-    return p;
-  }
-  function nowMinutes() {
-    const now = new Date();
-    let m = now.getHours() * 60 + now.getMinutes();
-    if (now.getHours() < 6) m += 1440;
-    return m;
   }
 
-  function buildRow(block, checkable, isNow, onToggle) {
+  // ---------- rendering ----------
+  function buildRow(slotIdx, meal, opts) {
     const li = document.createElement('li');
-    li.className = 'dp-row' + (block.done ? ' dp-row-done' : '') + (isNow ? ' dp-row-now' : '');
+    li.className = 'dp-row'
+      + (opts.eaten ? ' dp-row-done' : '')
+      + (opts.isNext ? ' dp-row-now' : '');
 
-    const time = document.createElement('span');
-    time.className = 'dp-time';
-    time.textContent = fmt(block.t);
-    li.appendChild(time);
+    const label = document.createElement('span');
+    label.className = 'dp-time';
+    label.textContent = SLOT_LABEL[slotIdx];
+    li.appendChild(label);
 
     const emoji = document.createElement('span');
     emoji.className = 'dp-emoji';
-    emoji.textContent = block.emoji;
+    emoji.textContent = meal.emoji;
     li.appendChild(emoji);
 
     const body = document.createElement('div');
     body.className = 'dp-body';
     const title = document.createElement('div');
     title.className = 'dp-title';
-    title.textContent = block.title;
-    const note = document.createElement('div');
-    note.className = 'dp-note';
-    note.textContent = block.note;
-    body.appendChild(title); body.appendChild(note);
+    title.textContent = meal.name;
+    const macros = document.createElement('div');
+    macros.className = 'dp-macro-line';
+    macros.textContent = meal.kcal + ' kcal · ' + meal.p + 'P · ' + meal.c + 'C · ' + meal.f + 'F';
+    const ing = document.createElement('div');
+    ing.className = 'dp-note';
+    ing.textContent = meal.ing.join(' · ');
+    const tip = document.createElement('div');
+    tip.className = 'dp-tip';
+    tip.textContent = meal.tip;
+    body.appendChild(title); body.appendChild(macros); body.appendChild(ing); body.appendChild(tip);
     li.appendChild(body);
 
-    if (checkable) {
+    const swap = document.createElement('button');
+    swap.type = 'button';
+    swap.className = 'gm-queue-btn';
+    swap.textContent = '🔄';
+    swap.title = 'Swap this meal';
+    swap.addEventListener('click', opts.onSwap);
+    li.appendChild(swap);
+
+    if (opts.checkable) {
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'gm-check';
-      cb.checked = !!block.done;
-      cb.addEventListener('change', () => onToggle(cb.checked));
+      cb.checked = !!opts.eaten;
+      cb.addEventListener('change', () => opts.onToggle(cb.checked));
       li.appendChild(cb);
     }
     return li;
   }
 
-  function renderToday() {
-    const k = planKey(activeDateString());
-    const p = ensureTodayPlan();
-    $('dpTodayLabel').textContent = 'Today — ' + formatDate(activeDateString());
+  function renderTotals(el, meals) {
+    const t = getTargets();
+    const sum = meals.reduce((a, m) => ({ kcal: a.kcal + m.kcal, p: a.p + m.p, c: a.c + m.c, f: a.f + m.f }),
+      { kcal: 0, p: 0, c: 0, f: 0 });
+    el.textContent = 'Day total ≈ ' + sum.kcal + ' kcal · ' + sum.p + ' g protein · '
+      + sum.c + ' g carbs · ' + sum.f + ' g fat (target ' + t.kcal + ' / ' + t.protein + ' g)';
+  }
 
-    const done = p.blocks.filter(b => b.done).length;
-    $('dpTodayCount').textContent = done + ' / ' + p.blocks.length + ' done';
-
-    // Highlight the block whose window contains "now".
-    const now = nowMinutes();
-    let nowIdx = -1;
-    p.blocks.forEach((b, i) => { if (b.t <= now) nowIdx = i; });
-
-    const list = $('dpTodayList');
+  function renderDay(dateStr, listId, totalId, checkable) {
+    const k = planKey(dateStr);
+    const p = ensurePlan(dateStr);
+    const meals = chosenMeals(p);
+    const list = $(listId);
     list.innerHTML = '';
-    p.blocks.forEach((b, i) => {
-      list.appendChild(buildRow(b, true, i === nowIdx, (checked) => {
-        const plan = storeGet(k);
-        if (!plan || !plan.blocks || !plan.blocks[i]) return;
-        plan.blocks[i].done = checked;
-        storeSet(k, plan);
-        renderToday();
+
+    const nextIdx = checkable ? p.eaten.indexOf(false) : -1;
+    meals.forEach((meal, i) => {
+      list.appendChild(buildRow(i, meal, {
+        checkable: checkable,
+        eaten: checkable && !!p.eaten[i],
+        isNext: i === nextIdx,
+        onSwap: () => {
+          const plan = ensurePlan(dateStr);
+          plan[SLOTS[i]] = (plan[SLOTS[i]] + 1) % MEALS[SLOTS[i]].length;
+          plan.eaten[i] = false;
+          storeSet(k, plan);
+          renderAll();
+        },
+        onToggle: (checked) => {
+          const plan = ensurePlan(dateStr);
+          plan.eaten[i] = checked;
+          storeSet(k, plan);
+          renderAll();
+        },
       }));
     });
-  }
-
-  // ---------- tomorrow ----------
-  function anchorsFromInputs() {
-    return {
-      wake: $('dpWake').value || '08:00',
-      bed:  $('dpBed').value  || '00:00',
-      gym:  $('dpGym').value  || '17:00',
-      rest: $('dpRest').classList.contains('on'),
-    };
-  }
-  function fillInputs(a) {
-    $('dpWake').value = a.wake;
-    $('dpBed').value  = a.bed;
-    $('dpGym').value  = a.gym;
-    $('dpRest').classList.toggle('on', !!a.rest);
-    $('dpGym').disabled = !!a.rest;
-  }
-  function saveTomorrow() {
-    const a = anchorsFromInputs();
-    storeSet(SET_KEY, a);
-    storeSet(planKey(tomorrowDateString()), { anchors: a, blocks: buildBlocks(a) });
-    renderTomorrow();
-  }
-  function renderTomorrow() {
-    $('dpTomorrowLabel').textContent = 'Plan tomorrow — ' + formatDate(tomorrowDateString());
-    const p = storeGet(planKey(tomorrowDateString()));
-    const blocks = (p && Array.isArray(p.blocks)) ? p.blocks : buildBlocks(getSettings());
-    const list = $('dpTomorrowList');
-    list.innerHTML = '';
-    blocks.forEach(b => list.appendChild(buildRow(b, false, false, null)));
-  }
-
-  ['dpWake', 'dpGym', 'dpBed'].forEach(id => $(id).addEventListener('change', saveTomorrow));
-  $('dpRest').addEventListener('click', () => {
-    $('dpRest').classList.toggle('on');
-    $('dpGym').disabled = $('dpRest').classList.contains('on');
-    saveTomorrow();
-  });
-  $('dpRebuildBtn').addEventListener('click', () => {
-    if (!confirm('Rebuild today\'s schedule from the anchors below? Checked-off blocks reset.')) return;
-    const a = anchorsFromInputs();
-    storeSet(SET_KEY, a);
-    storeSet(planKey(activeDateString()), { anchors: a, blocks: buildBlocks(a) });
-    renderToday();
-  });
-
-  // ---------- macro targets (from the hub profile) ----------
-  function renderMacros() {
-    const w = storeGet('po_water_v1');
-    const p = (w && w.profile) || {};
-    const grid = $('dpMacroGrid'), note = $('dpMacroNote');
-    if (!p.weightKg || !p.heightCm || !p.age) {
-      grid.style.display = 'none';
-      note.textContent = 'Add height, weight and age via ⚙ on the home page to get calorie and protein targets.';
-      return;
+    renderTotals($(totalId), meals);
+    if (checkable) {
+      $('mpTodayCount').textContent = p.eaten.filter(Boolean).length + ' / 3 eaten';
     }
-    const male = p.sex !== 'f';
-    const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (male ? 5 : -161);
-    const act = 1.3 + Math.min(p.activityHrsPerWeek || 0, 14) * 0.025;
-    const kcal = Math.round(bmr * act * 0.85 / 10) * 10;   // ~15% deficit
-    const protein = Math.round(p.weightKg * 2);            // 2 g/kg
-    const fat = Math.round(p.weightKg * 0.8);
-    const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
-    grid.style.display = '';
-    $('dpKcal').textContent = kcal;
-    $('dpProtein').textContent = protein;
-    $('dpCarbs').textContent = carbs;
-    $('dpFat').textContent = fat;
-    note.textContent = '≈15% below maintenance for fat loss, protein at 2 g/kg to build muscle. Per meal: ~'
-      + Math.round(kcal / 3) + ' kcal · ~' + Math.round(protein / 3) + ' g protein.';
+  }
+
+  function renderAll() {
+    $('mpTodayLabel').textContent = 'Today — ' + formatDate(activeDateString());
+    $('mpTomorrowLabel').textContent = 'Plan tomorrow — ' + formatDate(tomorrowDateString());
+    renderDay(activeDateString(), 'mpTodayList', 'mpTodayTotal', true);
+    renderDay(tomorrowDateString(), 'mpTomorrowList', 'mpTomorrowTotal', false);
+    renderMacros();
   }
 
   // ---------- boot ----------
   cleanupOldPlans();
-  fillInputs((storeGet(planKey(tomorrowDateString())) || {}).anchors || getSettings());
-  renderToday();
-  renderTomorrow();
-  renderMacros();
-  setInterval(renderToday, 60 * 1000);
-
-  window.addEventListener('storage', () => {
-    fillInputs((storeGet(planKey(tomorrowDateString())) || {}).anchors || getSettings());
-    renderToday(); renderTomorrow(); renderMacros();
-  });
+  renderAll();
+  window.addEventListener('storage', renderAll);
 })();
 </script>
 
@@ -1776,8 +1718,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedPrefixes: ['goals:', 'dayplan:'],
-    syncedKeys: ['dayplan_settings_v1'],
+    syncedPrefixes: ['goals:', 'mealplan:'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
       window.dispatchEvent(new Event('storage'));
