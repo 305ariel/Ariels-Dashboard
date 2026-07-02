@@ -1752,6 +1752,67 @@ body::after {
     return li;
   }
 
+  // ---------- AI adapt (server first, Nova browser key as fallback) ----------
+  function adaptPrompt(meal, context, targetKcal, targetProtein) {
+    return 'You plan meals for a fitness dashboard (goal: muscle growth with fat loss, high energy and focus).\n'
+      + 'Rebuild the meal below around what the user says they have available.\n\n'
+      + 'Rules:\n'
+      + '- The user\'s stated ingredients/constraints are the core of the meal — use them as given (brand names and amounts included).\n'
+      + '- Every ingredient gets an exact quantity in g or ml.\n'
+      + '- Land within ±10% of ' + targetKcal + ' kcal and ' + targetProtein + ' g protein. Fill gaps with simple whole foods.\n'
+      + '- One realistic meal someone would actually make, not a list of snacks.\n\n'
+      + 'Currently planned meal: ' + JSON.stringify(meal) + '\n'
+      + 'User\'s available ingredients / constraints: "' + context.replace(/"/g, "'") + '"\n\n'
+      + 'Return ONLY a JSON object, no code fences, no preamble:\n'
+      + '{"name": "...", "emoji": "one emoji", "kcal": 0, "p": 0, "c": 0, "f": 0, "ing": ["100 g ...", "..."], "tip": "one short sentence on why this works"}';
+  }
+  function normalizeMeal(out) {
+    if (!validMeal(out)) return null;
+    return {
+      name: out.name,
+      emoji: (typeof out.emoji === 'string' && out.emoji) ? out.emoji : '🍽️',
+      kcal: Math.round(Number(out.kcal) || 0),
+      p: Math.round(Number(out.p) || 0),
+      c: Math.round(Number(out.c) || 0),
+      f: Math.round(Number(out.f) || 0),
+      ing: out.ing.map(String),
+      tip: typeof out.tip === 'string' ? out.tip : '',
+    };
+  }
+  async function adaptViaServer(meal, context, targetKcal, targetProtein) {
+    const res = await fetch('/api/meal-adapt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ meal, context, targetKcal, targetProtein }),
+    });
+    const j = await res.json();
+    if (!res.ok) throw new Error((j && j.error) || ('http_' + res.status));
+    return normalizeMeal(j);
+  }
+  // Same key the Nova page saves — paste it once there and rebuilds work everywhere.
+  function novaKey() { try { return localStorage.getItem('nova_lite_api_key') || ''; } catch (e) { return ''; } }
+  async function adaptViaBrowser(meal, context, targetKcal, targetProtein) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': novaKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: adaptPrompt(meal, context, targetKcal, targetProtein) }],
+      }),
+    });
+    const j = await res.json();
+    if (j.error) throw new Error(j.error.message || 'anthropic_error');
+    const text = ((j.content && j.content[0] && j.content[0].text) || '').trim()
+      .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    return normalizeMeal(JSON.parse(text));
+  }
+
   function renderTotals(el, meals) {
     const t = getTargets();
     const sum = meals.reduce((a, m) => ({ kcal: a.kcal + m.kcal, p: a.p + m.p, c: a.c + m.c, f: a.f + m.f }),
@@ -1798,29 +1859,26 @@ body::after {
           plan.ctx[slot] = text;
           storeSet(k, plan);
           const t = getTargets();
-          try {
-            setStatus('Rebuilding around your ingredients…');
-            const res = await fetch('/api/meal-adapt', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                meal: meal,
-                context: text,
-                targetKcal: Math.round(t.kcal / 3),
-                targetProtein: Math.round(t.protein / 3),
-              }),
-            });
-            const j = await res.json();
-            if (!res.ok || !validMeal(j)) throw new Error((j && j.error) || 'bad_response');
+          const kcalT = Math.round(t.kcal / 3);
+          const protT = Math.round(t.protein / 3);
+          setStatus('Rebuilding around your ingredients…');
+          let custom = null;
+          try { custom = await adaptViaServer(meal, text, kcalT, protT); } catch (e) {}
+          if (!custom && novaKey()) {
+            try { custom = await adaptViaBrowser(meal, text, kcalT, protT); } catch (e) {}
+          }
+          if (custom) {
             plan = ensurePlan(dateStr);
             plan.custom = plan.custom || {};
-            plan.custom[slot] = j;
+            plan.custom[slot] = custom;
             plan.eaten[i] = false;
             storeSet(k, plan);
             renderAll();
-          } catch (e) {
-            setStatus('Note saved ✓ — AI rebuild unavailable (needs ANTHROPIC_API_KEY on Vercel).');
-            setTimeout(renderAll, 3200);
+          } else {
+            setStatus(novaKey()
+              ? 'Note saved ✓ — rebuild failed, try again in a moment.'
+              : 'Note saved ✓ — paste your Anthropic API key on the Nova page to enable rebuilds.');
+            setTimeout(renderAll, 4500);
           }
         },
         onClearAdapt: () => {
